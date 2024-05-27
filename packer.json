@@ -1,0 +1,78 @@
+{
+  "builders": [
+    {
+      "communicator": "winrm",
+      "disk_size": 122980,
+      "floppy_files": [
+        "Autounattend.xml",
+        "update-windows.ps1",
+        "configure-winrm.ps1"
+      ],
+      "guest_additions_mode": "upload",
+      "guest_additions_path": "c:/Windows/Temp/windows.iso",
+      "guest_os_type": "Windows10_64",
+      "hard_drive_interface": "sata",
+      "headless": true,
+      "iso_checksum": "md5:{{user `iso_md5`}}",
+      "iso_interface": "sata",
+      "iso_url": "{{user `iso_path`}}",
+      "shutdown_command": "",
+      "type": "virtualbox-iso",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "4096"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "4"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--vram",
+          "32"
+        ]
+      ],
+      "winrm_insecure": true,
+      "winrm_password": "vagrant",
+      "winrm_timeout": "6h",
+      "winrm_username": "vagrant"
+    }
+  ],
+  "post-processors": [
+    {
+      "keep_input_artifact": true,
+      "output": "{{.Provider}}_windows-10.box",
+      "type": "vagrant",
+      "vagrantfile_template": "vagrantfile.template"
+    }
+  ],
+  "provisioners": [
+    {
+      "scripts": [
+        "install-guest-tools.ps1",
+        "enable-rdp.ps1",
+        "disable-hibernate.ps1",
+        "disable-autologin.ps1",
+        "enable-uac.ps1",
+        "no-expiration.ps1"
+      ],
+      "type": "powershell"
+    },
+    {
+      "restart_check_command": "powershell -command \"\u0026 {if ((get-content C:\\ProgramData\\lastboot.txt) -eq (Get-WmiObject win32_operatingsystem).LastBootUpTime) {Write-Output 'Sleeping for 600 seconds to wait for reboot'; start-sleep 600} else {Write-Output 'Reboot complete'}}\"",
+      "restart_command": "powershell \"\u0026 {(Get-WmiObject win32_operatingsystem).LastBootUpTime > C:\\ProgramData\\lastboot.txt; Restart-Computer -force}\"",
+      "type": "windows-restart"
+    }
+  ],
+  "variables": {
+    "iso_md5": "daee4c14a80dab35b1256c9d2be5ee3c",
+    "iso_path": "D:\\VM ISO\\Microsoft Windows 10 Pro x64BiT.iso",
+    "switch_name": "Default Switch"
+  }
+}
